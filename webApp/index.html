@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title>Air Quality & Occupancy Monitor - Modern</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    body {
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(-45deg, #f8fafc, #e0f2fe, #dbeafe, #eff6ff);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+      min-height: 100vh;
+      padding: 0;
+    }
+    
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 32px;
+    }
+    
+    /* Login Screen */
+    .login-container {
+      max-width: 480px;
+      margin: 60px auto;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      padding: 56px 48px;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      animation: fadeIn 0.6s ease;
+    }
+    
+    .login-logo {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 28px;
+      display: block;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+    }
+    
+    .login-title {
+      text-align: center;
+      background: linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #0891b2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 40px;
+      font-size: 2em;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+    
+    .form-group {
+      margin-bottom: 28px;
+      position: relative;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 10px;
+      color: #334155;
+      font-weight: 600;
+      font-size: 0.9375em;
+      letter-spacing: -0.01em;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 16px 20px;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      font-size: 1em;
+      color: #0f172a;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: 500;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #0284c7;
+      background: #ffffff;
+      box-shadow: 
+        0 0 0 4px rgba(2, 132, 199, 0.1),
+        0 2px 8px rgba(2, 132, 199, 0.15);
+      transform: translateY(-1px);
+    }
+    
+    .form-group input::placeholder {
+      color: #94a3b8;
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 17px;
+      background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.0625em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      letter-spacing: 0.02em;
+      box-shadow: 0 4px 16px rgba(2, 132, 199, 0.3);
+    }
+    
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(2, 132, 199, 0.4);
+    }
+    
+    .login-btn:active {
+      transform: translateY(0);
+    }
+    
+    .login-btn:disabled {
+      background: linear-gradient(135deg, #94a3b8 0%, #cbd5e1 100%);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .error-message {
+      background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+      color: white;
+      padding: 14px 18px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      text-align: center;
+      font-size: 0.9375em;
+      display: none;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+    }
+    
+    .error-message.show {
+      display: block;
+      animation: fadeIn 0.4s ease;
+    }
+    
+    /* Dashboard */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 32px 24px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+    }
+    
+    .header h1 {
+      font-size: 2.5em;
+      font-weight: 800;
+      background: linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #0891b2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 20px;
+      letter-spacing: -0.04em;
+    }
+    
+    .header .logo {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+      display: block;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+    }
+    
+    .status, .user-info {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 10px 20px;
+      border-radius: 50px;
+      color: #475569;
+      font-size: 0.875em;
+      display: inline-block;
+      margin: 6px 4px;
+      font-weight: 600;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      animation: fadeIn 0.6s ease;
+    }
+    
+    .card h3 {
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 1.25em;
+      letter-spacing: -0.02em;
+    }
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .metric {
+      display: flex;
+      align-items: center;
+      padding: 28px 24px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 20px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .metric::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(14, 165, 233, 0.05) 100%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    
+    .metric:hover::before {
+      opacity: 1;
+    }
+    
+    .metric:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 
+        0 12px 32px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+    
+    .metric-icon {
+      font-size: 2.75em;
+      margin-right: 20px;
+      width: 64px;
+      text-align: center;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      position: relative;
+      z-index: 1;
+    }
+    
+    .metric-content {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .metric-label {
+      font-size: 0.8125em;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    
+    .metric-value {
+      font-size: 2.25em;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    
+    .metric-unit {
+      font-size: 0.5em;
+      color: #94a3b8;
+      margin-left: 6px;
+      font-weight: 600;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 0.8125em;
+      font-weight: 700;
+      margin-top: 8px;
+      color: white;
+      letter-spacing: 0.03em;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .aqi-card {
+      color: white;
+      text-align: center;
+      padding: 40px 32px;
+      border-radius: 24px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: fadeIn 0.6s ease;
+    }
+    
+    .aqi-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+    }
+    
+    .aqi-value {
+      font-size: 4.5em;
+      font-weight: 900;
+      margin: 16px 0;
+      letter-spacing: -0.04em;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .aqi-label {
+      font-size: 1.25em;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .occupancy-card {
+      background: linear-gradient(135deg, #0891b2 0%, #0284c7 100%);
+      color: white;
+      text-align: center;
+      padding: 40px 32px;
+      border-radius: 24px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 
+        0 12px 40px rgba(8, 145, 178, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: fadeIn 0.6s ease;
+    }
+    
+    .occupancy-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(8, 145, 178, 0.45);
+    }
+    
+    .occupancy-value {
+      font-size: 4.5em;
+      font-weight: 900;
+      margin: 16px 0;
+      letter-spacing: -0.04em;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .dual-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 56px;
+      color: #475569;
+      font-size: 1.25em;
+      font-weight: 600;
+    }
+    
+    .error {
+      background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 18px 24px;
+      border-radius: 16px;
+      margin: 24px 0;
+      text-align: center;
+      font-size: 0.9375em;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(220, 38, 38, 0.3);
+    }
+    
+    .btn {
+      background: rgba(255, 255, 255, 0.95);
+      color: #475569;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      padding: 10px 24px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 0.875em;
+      margin: 6px 4px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    
+    .btn:hover {
+      background: rgba(255, 255, 255, 1);
+      color: #0f172a;
+      border-color: rgba(59, 130, 246, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .logout-btn {
+      background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+    
+    .logout-btn:hover {
+      background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+    }
+    
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(540px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+    }
+    
+    .chart-container {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      animation: fadeIn 0.6s ease;
+    }
+    
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid rgba(226, 232, 240, 0.8);
+    }
+    
+    .chart-title {
+      font-size: 1.125em;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+    
+    .chart-stat {
+      font-size: 0.875em;
+      color: #64748b;
+      font-weight: 600;
+    }
+    
+    .slider-container {
+      padding: 32px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    }
+    
+    .time-slider {
+      width: 100%;
+      height: 8px;
+      border-radius: 50px;
+      outline: none;
+      background: linear-gradient(90deg, #0891b2 0%, #0284c7 100%);
+      -webkit-appearance: none;
+      margin-bottom: 20px;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .time-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      cursor: pointer;
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        0 0 0 3px rgba(8, 145, 178, 0.3);
+      border: 3px solid #0891b2;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .time-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.2),
+        0 0 0 4px rgba(8, 145, 178, 0.4);
+    }
+    
+    .time-slider::-webkit-slider-thumb:active {
+      transform: scale(1.1);
+    }
+    
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      color: #64748b;
+      font-size: 0.875em;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: 0.02em;
+    }
+    
+    .slider-display {
+      text-align: center;
+      background: linear-gradient(135deg, #0891b2 0%, #0284c7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 1.375em;
+      font-weight: 800;
+      margin-top: 20px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(8, 145, 178, 0.1) 0%, rgba(2, 132, 199, 0.1) 100%);
+      border: 2px solid rgba(8, 145, 178, 0.2);
+      border-radius: 14px;
+      letter-spacing: -0.02em;
+      color: #0891b2;
+      -webkit-background-clip: unset;
+      -webkit-text-fill-color: unset;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    @media (max-width: 1200px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .container { padding: 20px; }
+      .header h1 { font-size: 1.875em; }
+      .metrics-grid, .dual-cards {
+        grid-template-columns: 1fr;
+      }
+      .chart-container { padding: 24px; }
+      .login-container { padding: 40px 32px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id='loginScreen' class='login-container'>
+    <svg class='login-logo' viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="100" r="95" fill="#e0f2fe" stroke="#0891b2" stroke-width="3"/>
+      <ellipse cx="80" cy="70" rx="15" ry="25" fill="#22d3ee" transform="rotate(-30 80 70)"/>
+      <ellipse cx="120" cy="70" rx="15" ry="25" fill="#06b6d4" transform="rotate(30 120 70)"/>
+      <ellipse cx="100" cy="55" rx="12" ry="20" fill="#0891b2"/>
+      <rect x="50" y="110" width="20" height="40" fill="#67e8f9" rx="2"/>
+      <rect x="75" y="100" width="18" height="50" fill="#5eead4" rx="2"/>
+      <rect x="98" y="105" width="22" height="45" fill="#22d3ee" rx="2"/>
+      <rect x="125" y="95" width="20" height="55" fill="#06b6d4" rx="2"/>
+    </svg>
+    <h2 class='login-title'>🔐 Secure Access</h2>
+    <div id='loginError' class='error-message'></div>
+    <form id='loginForm'>
+      <div class='form-group'>
+        <label for='email'>Email Address</label>
+        <input type='email' id='email' required placeholder='your@email.com'>
+      </div>
+      <div class='form-group'>
+        <label for='password'>Password</label>
+        <input type='password' id='password' required placeholder='Enter your password'>
+      </div>
+      <button type='submit' id='loginBtn' class='login-btn'>Sign In</button>
+    </form>
+  </div>
+
+  <!-- Dashboard Screen -->
+  <div id='dashboardScreen' class='container hidden'>
+    <div class='header'>
+      <svg class='logo' viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="95" fill="#e0f2fe" stroke="#0891b2" stroke-width="2"/>
+        <ellipse cx="80" cy="70" rx="15" ry="25" fill="#22d3ee" transform="rotate(-30 80 70)"/>
+        <ellipse cx="120" cy="70" rx="15" ry="25" fill="#06b6d4" transform="rotate(30 120 70)"/>
+        <ellipse cx="100" cy="55" rx="12" ry="20" fill="#0891b2"/>
+        <rect x="50" y="110" width="20" height="40" fill="#67e8f9" rx="2"/>
+        <rect x="75" y="100" width="18" height="50" fill="#5eead4" rx="2"/>
+        <rect x="98" y="105" width="22" height="45" fill="#22d3ee" rx="2"/>
+        <rect x="125" y="95" width="20" height="55" fill="#06b6d4" rx="2"/>
+        <rect x="140" y="115" width="30" height="25" fill="white" stroke="#0891b2" stroke-width="2" rx="3"/>
+        <circle cx="155" cy="127" r="4" fill="#22d3ee"/>
+        <line x1="145" y1="135" x2="165" y2="135" stroke="#06b6d4" stroke-width="2"/>
+      </svg>
+      <h1>Air Quality & Occupancy Monitor</h1>
+      <div class='user-info'>👤 <span id='userEmail'>-</span></div>
+      <div id='connectionStatus' class='status'>🔌 Connecting...</div>
+      <div id='lastUpdate' class='status'>⏱️ Loading...</div>
+      <div id='dataCount' class='status'>📊 0 records</div>
+      <button class='btn' onclick='loadLatestData()'>🔄 Refresh Now</button>
+      <button class='btn' onclick='toggleAutoRefresh()' id='autoRefreshBtn'>⏸️ Pause Auto-refresh</button>
+      <button class='btn logout-btn' onclick='logout()'>🚪 Logout</button>
+    </div>
+    
+    <div id='errorMessage' style='display:none;' class='error'></div>
+    <div id='loadingMessage' class='loading'>Loading data...</div>
+    
+    <div id='dataContainer' style='display:none;'>
+      <div class='dual-cards'>
+        <div id='aqiCard' class='aqi-card'>
+          <div class='aqi-label'>Air Quality Index</div>
+          <div class='aqi-value' id='aqiValue'>-</div>
+          <div class='aqi-label' id='aqiStatus'>Loading...</div>
+        </div>
+        
+        <div class='occupancy-card'>
+          <div class='aqi-label'>Room Occupancy</div>
+          <div class='occupancy-value' id='occupancyValue'>-</div>
+          <div class='aqi-label' id='occupancyStatus'>People in room</div>
+        </div>
+      </div>
+      
+      <div class='card'>
+        <h3 style='margin-bottom:20px;'>Current Readings</h3>
+        <div class='metrics-grid'>
+          <div class='metric'>
+            <div class='metric-icon'>🌡️</div>
+            <div class='metric-content'>
+              <div class='metric-label'>Temperature</div>
+              <div class='metric-value'><span id='tempValue'>-</span><span class='metric-unit'>°C</span></div>
+            </div>
+          </div>
+          
+          <div class='metric'>
+            <div class='metric-icon'>💧</div>
+            <div class='metric-content'>
+              <div class='metric-label'>Humidity</div>
+              <div class='metric-value'><span id='humValue'>-</span><span class='metric-unit'>%</span></div>
+            </div>
+          </div>
+          
+          <div class='metric'>
+            <div class='metric-icon'>💨</div>
+            <div class='metric-content'>
+              <div class='metric-label'>CO2</div>
+              <div class='metric-value'><span id='co2Value'>-</span><span class='metric-unit'>ppm</span></div>
+              <div class='status-badge' id='co2Status' style='background:#94a3b8'>-</div>
+            </div>
+          </div>
+          
+          <div class='metric'>
+            <div class='metric-icon'>☁️</div>
+            <div class='metric-content'>
+              <div class='metric-label'>VOCs</div>
+              <div class='metric-value'><span id='tvocValue'>-</span><span class='metric-unit'>ppb</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class='card'>
+        <h3 style='margin-bottom:24px;'>Select Time Range</h3>
+        <div class='slider-container'>
+          <input type='range' id='timeSlider' min='0' max='4' value='2' step='1' class='time-slider'>
+          <div class='slider-labels'>
+            <span>1h</span>
+            <span>6h</span>
+            <span>24h</span>
+            <span>7d</span>
+            <span>30d</span>
+          </div>
+          <div class='slider-display' id='sliderDisplay'>24 Hours</div>
+        </div>
+      </div>
+
+      <div class='charts-grid'>
+        <div class='chart-container'>
+          <div class='chart-header'>
+            <div class='chart-title'>👥 Room Occupancy</div>
+            <div class='chart-stat'>Avg: <span id='avgOccupancy'>-</span> | Max: <span id='maxOccupancy'>-</span></div>
+          </div>
+          <canvas id='occupancyChart'></canvas>
+        </div>
+
+        <div class='chart-container'>
+          <div class='chart-header'>
+            <div class='chart-title'>🌡️ Temperature</div>
+            <div class='chart-stat'>Avg: <span id='avgTemp'>-</span></div>
+          </div>
+          <canvas id='tempChart'></canvas>
+        </div>
+
+        <div class='chart-container'>
+          <div class='chart-header'>
+            <div class='chart-title'>💧 Humidity</div>
+            <div class='chart-stat'>Avg: <span id='avgHum'>-</span></div>
+          </div>
+          <canvas id='humChart'></canvas>
+        </div>
+
+        <div class='chart-container'>
+          <div class='chart-header'>
+            <div class='chart-title'>💨 Carbon Dioxide</div>
+            <div class='chart-stat'>Avg: <span id='avgCo2'>-</span> | Max: <span id='maxCo2'>-</span></div>
+          </div>
+          <canvas id='co2Chart'></canvas>
+        </div>
+
+        <div class='chart-container'>
+          <div class='chart-header'>
+            <div class='chart-title'>☁️ Volatile Organic Compounds</div>
+            <div class='chart-stat'>Avg: <span id='avgTvoc'>-</span> | Max: <span id='maxTvoc'>-</span></div>
+          </div>
+          <canvas id='tvocChart'></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZflz6znahYOYnW37ze7Q_ICeVtZ4YRAI",
+      authDomain: "smarthome-acecf.firebaseapp.com",
+      databaseURL: "https://smarthome-acecf-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "smarthome-acecf",
+      storageBucket: "smarthome-acecf.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    let autoRefresh = true;
+    let refreshInterval;
+    let charts = { temp: null, hum: null, co2: null, tvoc: null, occupancy: null };
+    let currentTimeRange = 24;
+    let cachedData = null;
+    let totalRecords = 0;
+    let currentUser = null;
+
+    const timeRanges = [1, 6, 24, 168, 720];
+    const timeLabels = ['1 Hour', '6 Hours', '24 Hours', '7 Days', '30 Days'];
+
+    // Authentication State Observer
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('dashboardScreen').classList.remove('hidden');
+        document.getElementById('userEmail').textContent = user.email;
+        loadLatestData();
+        startAutoRefresh();
+      } else {
+        currentUser = null;
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('dashboardScreen').classList.add('hidden');
+      }
+    });
+
+    // Login Form Handler
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const loginBtn = document.getElementById('loginBtn');
+      const errorDiv = document.getElementById('loginError');
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Signing in...';
+      errorDiv.classList.remove('show');
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (error) {
+        console.error('Login error:', error);
+        errorDiv.textContent = getErrorMessage(error.code);
+        errorDiv.classList.add('show');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign In';
+      }
+    });
+
+    function getErrorMessage(code) {
+      const messages = {
+        'auth/user-not-found': 'No account found with this email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/invalid-email': 'Invalid email address.',
+        'auth/user-disabled': 'This account has been disabled.',
+        'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
+        'auth/network-request-failed': 'Network error. Check your connection.'
+      };
+      return messages[code] || 'Login failed. Please try again.';
+    }
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        auth.signOut();
+        if (refreshInterval) clearInterval(refreshInterval);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const slider = document.getElementById('timeSlider');
+      const display = document.getElementById('sliderDisplay');
+      
+      slider.addEventListener('input', function() {
+        const index = parseInt(this.value);
+        display.textContent = timeLabels[index];
+      });
+      
+      slider.addEventListener('change', function() {
+        const index = parseInt(this.value);
+        changeTimeRange(timeRanges[index]);
+      });
+    });
+
+    function getAQIInfo(aqi) {
+      const info = {
+        1: { status: "Excellent", color: "linear-gradient(135deg, #10b981 0%, #059669 100%)" },
+        2: { status: "Good", color: "linear-gradient(135deg, #0891b2 0%, #0284c7 100%)" },
+        3: { status: "Moderate", color: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" },
+        4: { status: "Poor", color: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)" },
+        5: { status: "Unhealthy", color: "linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%)" }
+      };
+      return info[aqi] || { status: "Unknown", color: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)" };
+    }
+
+    function getCO2Info(eco2) {
+      if (eco2 > 1000) return { status: "Poor", color: "#ef4444" };
+      if (eco2 > 800) return { status: "Moderate", color: "#f59e0b" };
+      return { status: "Normal", color: "#10b981" };
+    }
+
+    function getOccupancyStatus(count) {
+      if (count === 0) return "Empty";
+      if (count === 1) return "1 Person";
+      return count + " People";
+    }
+
+    function showError(message) {
+      document.getElementById('errorMessage').textContent = message;
+      document.getElementById('errorMessage').style.display = 'block';
+      document.getElementById('loadingMessage').style.display = 'none';
+      document.getElementById('connectionStatus').textContent = '❌ Connection Error';
+    }
+
+    function updateDisplay(data) {
+      document.getElementById('loadingMessage').style.display = 'none';
+      document.getElementById('dataContainer').style.display = 'block';
+      document.getElementById('errorMessage').style.display = 'none';
+      document.getElementById('connectionStatus').textContent = '✅ Connected';
+
+      document.getElementById('tempValue').textContent = data.temperature.toFixed(1);
+      document.getElementById('humValue').textContent = data.humidity.toFixed(1);
+      document.getElementById('co2Value').textContent = data.eco2;
+      document.getElementById('tvocValue').textContent = data.tvoc;
+      document.getElementById('aqiValue').textContent = data.aqi;
+
+      const occupancy = data.OCount || 0;
+      document.getElementById('occupancyValue').textContent = occupancy;
+      document.getElementById('occupancyStatus').textContent = getOccupancyStatus(occupancy);
+
+      const aqiInfo = getAQIInfo(data.aqi);
+      document.getElementById('aqiStatus').textContent = aqiInfo.status;
+      document.getElementById('aqiCard').style.background = aqiInfo.color;
+
+      const co2Info = getCO2Info(data.eco2);
+      document.getElementById('co2Status').textContent = co2Info.status;
+      document.getElementById('co2Status').style.background = co2Info.color;
+
+      const lastUpdate = new Date(data.timestamp);
+      const now = new Date();
+      const diffMinutes = Math.floor((now - lastUpdate) / 60000);
+      document.getElementById('lastUpdate').textContent = 
+        `⏱️ Updated ${diffMinutes === 0 ? 'just now' : diffMinutes + ' min ago'}`;
+    }
+
+    async function loadLatestData() {
+      if (!currentUser) return;
+
+      try {
+        const snapshot = await database.ref('airQualityData').orderByKey().limitToLast(1).once('value');
+        const data = snapshot.val();
+        
+        if (!data || Object.keys(data).length === 0) {
+          showError('No data available yet. Device may not have sent data to Firebase.');
+          return;
+        }
+
+        const latestKey = Object.keys(data)[0];
+        const latestData = data[latestKey];
+
+        updateDisplay(latestData);
+        
+        if (!cachedData || Date.now() - cachedData.loadTime > 60000) {
+          loadHistoryData();
+        } else {
+          updateCharts();
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showError('Error loading data: ' + error.message);
+      }
+    }
+
+    async function loadHistoryData() {
+      if (!currentUser) return;
+
+      try {
+        const hoursAgo = currentTimeRange;
+        const startTime = Math.floor(Date.now() / 1000) - (hoursAgo * 60 * 60);
+        
+        const snapshot = await database.ref('airQualityData').orderByKey().startAt(startTime.toString()).once('value');
+        const data = snapshot.val();
+
+        if (!data) {
+          console.log('No historical data available');
+          return;
+        }
+
+        cachedData = { data: data, loadTime: Date.now() };
+        totalRecords = Object.keys(data).length;
+        document.getElementById('dataCount').textContent = `📊 ${totalRecords} records`;
+
+        updateCharts();
+      } catch (error) {
+        console.error('Error loading history:', error);
+      }
+    }
+
+    function createChart(ctx, label, data, color, yAxisLabel) {
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: label,
+            data: data.values,
+            borderColor: color,
+            backgroundColor: color + '30',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 7,
+            pointBackgroundColor: color,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              padding: 16,
+              titleFont: { size: 15, weight: '700' },
+              bodyFont: { size: 14, weight: '600' },
+              borderColor: 'rgba(148, 163, 184, 0.3)',
+              borderWidth: 1,
+              cornerRadius: 12
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: label === 'Occupancy',
+              title: { 
+                display: true, 
+                text: yAxisLabel,
+                font: { size: 13, weight: '600' },
+                color: '#64748b'
+              },
+              grid: { color: 'rgba(148, 163, 184, 0.15)', drawBorder: false },
+              ticks: label === 'Occupancy' ? { 
+                stepSize: 1,
+                font: { size: 12, weight: '600' },
+                color: '#64748b'
+              } : {
+                font: { size: 12, weight: '600' },
+                color: '#64748b'
+              }
+            },
+            x: { 
+              grid: { display: false, drawBorder: false },
+              ticks: {
+                font: { size: 11, weight: '600' },
+                color: '#94a3b8'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateCharts() {
+      if (!cachedData) return;
+
+      const data = cachedData.data;
+      const entries = Object.values(data).sort((a, b) => 
+        new Date(a.timestamp) - new Date(b.timestamp)
+      );
+
+      const maxPoints = 100;
+      let sampledEntries = entries;
+      
+      if (entries.length > maxPoints) {
+        const step = Math.ceil(entries.length / maxPoints);
+        sampledEntries = entries.filter((_, index) => index % step === 0);
+      }
+
+      const labels = sampledEntries.map(e => {
+        const date = new Date(e.timestamp);
+        if (currentTimeRange <= 24) {
+          return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        } else {
+          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit' });
+        }
+      });
+
+      const temps = sampledEntries.map(e => e.temperature);
+      const hums = sampledEntries.map(e => e.humidity);
+      const co2s = sampledEntries.map(e => e.eco2);
+      const tvocs = sampledEntries.map(e => e.tvoc);
+      const occupancies = sampledEntries.map(e => e.OCount || 0);
+
+      const avgTemp = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
+      const avgHum = (hums.reduce((a, b) => a + b, 0) / hums.length).toFixed(1);
+      const avgCo2 = Math.round(co2s.reduce((a, b) => a + b, 0) / co2s.length);
+      const maxCo2 = Math.max(...co2s);
+      const avgTvoc = Math.round(tvocs.reduce((a, b) => a + b, 0) / tvocs.length);
+      const maxTvoc = Math.max(...tvocs);
+      const avgOccupancy = (occupancies.reduce((a, b) => a + b, 0) / occupancies.length).toFixed(1);
+      const maxOccupancy = Math.max(...occupancies);
+
+      document.getElementById('avgTemp').textContent = avgTemp + '°C';
+      document.getElementById('avgHum').textContent = avgHum + '%';
+      document.getElementById('avgCo2').textContent = avgCo2 + ' ppm';
+      document.getElementById('maxCo2').textContent = maxCo2 + ' ppm';
+      document.getElementById('avgTvoc').textContent = avgTvoc + ' ppb';
+      document.getElementById('maxTvoc').textContent = maxTvoc + ' ppb';
+      document.getElementById('avgOccupancy').textContent = avgOccupancy;
+      document.getElementById('maxOccupancy').textContent = maxOccupancy;
+
+      Object.values(charts).forEach(chart => { if (chart) chart.destroy(); });
+
+      charts.occupancy = createChart(
+        document.getElementById('occupancyChart').getContext('2d'),
+        'Occupancy', { labels, values: occupancies }, '#0891b2', 'Number of People'
+      );
+
+      charts.temp = createChart(
+        document.getElementById('tempChart').getContext('2d'),
+        'Temperature', { labels, values: temps }, '#ef4444', 'Temperature (°C)'
+      );
+
+      charts.hum = createChart(
+        document.getElementById('humChart').getContext('2d'),
+        'Humidity', { labels, values: hums }, '#0891b2', 'Humidity (%)'
+      );
+
+      charts.co2 = createChart(
+        document.getElementById('co2Chart').getContext('2d'),
+        'CO2', { labels, values: co2s }, '#10b981', 'CO2 (ppm)'
+      );
+
+      charts.tvoc = createChart(
+        document.getElementById('tvocChart').getContext('2d'),
+        'TVOCs', { labels, values: tvocs }, '#8b5cf6', 'TVOCs (ppb)'
+      );
+    }
+
+    function changeTimeRange(hours) {
+      currentTimeRange = hours;
+      const index = timeRanges.indexOf(hours);
+      if (index !== -1) {
+        document.getElementById('timeSlider').value = index;
+        document.getElementById('sliderDisplay').textContent = timeLabels[index];
+      }
+      cachedData = null;
+      loadHistoryData();
+    }
+
+    function toggleAutoRefresh() {
+      autoRefresh = !autoRefresh;
+      const btn = document.getElementById('autoRefreshBtn');
+      
+      if (autoRefresh) {
+        btn.textContent = '⏸️ Pause Auto-refresh';
+        startAutoRefresh();
+      } else {
+        btn.textContent = '▶️ Resume Auto-refresh';
+        clearInterval(refreshInterval);
+      }
+    }
+
+    function startAutoRefresh() {
+      if (refreshInterval) clearInterval(refreshInterval);
+      refreshInterval = setInterval(() => {
+        if (autoRefresh && currentUser) loadLatestData();
+      }, 30000);
+    }
+  </script>
+</body>
+</html>
