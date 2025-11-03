@@ -3,7 +3,7 @@
 <head>
   <meta charset='UTF-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <title>Air Quality & Occupancy Monitor - Modern</title>
+  <title>Air Quality & Occupancy Monitor</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
@@ -16,6 +16,10 @@
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
     
     body {
@@ -123,7 +127,7 @@
       box-shadow: 0 4px 16px rgba(2, 132, 199, 0.3);
     }
     
-    .login-btn:hover {
+    .login-btn:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 8px 24px rgba(2, 132, 199, 0.4);
     }
@@ -547,10 +551,6 @@
     
     .slider-display {
       text-align: center;
-      background: linear-gradient(135deg, #0891b2 0%, #0284c7 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
       font-size: 1.375em;
       font-weight: 800;
       margin-top: 20px;
@@ -560,8 +560,6 @@
       border-radius: 14px;
       letter-spacing: -0.02em;
       color: #0891b2;
-      -webkit-background-clip: unset;
-      -webkit-text-fill-color: unset;
     }
     
     .hidden {
@@ -754,15 +752,27 @@
     </div>
   </div>
 
-    <!-- Firebase SDK -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
   
   <script>
-    // Global variables
-    let auth, database;
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZflz6znahYOYnW37ze7Q_ICeVtZ4YRAI",
+      authDomain: "smarthome-acecf.firebaseapp.com",
+      databaseURL: "https://smarthome-acecf-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "smarthome-acecf",
+      storageBucket: "smarthome-acecf.appspot.com"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
     let autoRefresh = true;
     let refreshInterval;
     let charts = { temp: null, hum: null, co2: null, tvoc: null, occupancy: null };
@@ -774,117 +784,59 @@
     const timeRanges = [1, 6, 24, 168, 720];
     const timeLabels = ['1 Hour', '6 Hours', '24 Hours', '7 Days', '30 Days'];
 
-    // Load Firebase configuration and initialize
-    async function initializeApp() {
-      const loadingScreen = document.getElementById('loadingScreen');
-      const loadingText = loadingScreen.querySelector('.loading-text');
-      
-      try {
-        loadingText.textContent = 'Loading configuration...';
-        
-        // Try to load config from API (for production)
-        let config;
-        try {
-          const response = await fetch('/api/config');
-          if (response.ok) {
-            config = await response.json();
-            console.log('Using production Firebase config');
-          } else {
-            throw new Error('API config not available');
-          }
-        } catch (apiError) {
-          // Fallback to environment or hardcoded config (for local dev)
-          console.log('Using fallback Firebase config');
-          config = {
-            apiKey: "AIzaSyDZflz6znahYOYnW37ze7Q_ICeVtZ4YRAI",
-            authDomain: "smarthome-acecf.firebaseapp.com",
-            databaseURL: "https://smarthome-acecf-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "smarthome-acecf",
-            storageBucket: "smarthome-acecf.appspot.com"
-          };
-        }
-
-        loadingText.textContent = 'Initializing Firebase...';
-        
-        // Initialize Firebase
-        firebase.initializeApp(config);
-        auth = firebase.auth();
-        database = firebase.database();
-        
-        loadingText.textContent = 'Setting up authentication...';
-        
-        // Wait for auth state
-        await new Promise((resolve) => {
-          const unsubscribe = auth.onAuthStateChanged(user => {
-            unsubscribe();
-            resolve(user);
-          });
-        });
-        
-        // Hide loading screen
-        loadingScreen.style.display = 'none';
-        
-        // Setup auth state observer
-        setupAuthObserver();
-        
-        console.log('App initialized successfully');
-        
-      } catch (error) {
-        console.error('Initialization error:', error);
-        loadingText.textContent = 'Error: ' + error.message;
-        loadingText.style.color = '#ef4444';
-        
-        // Show error but allow retry
-        setTimeout(() => {
-          loadingScreen.style.display = 'none';
-          showError('Failed to initialize app. Please refresh the page.');
-        }, 3000);
+    // Authentication State Observer
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('dashboardScreen').classList.remove('hidden');
+        document.getElementById('userEmail').textContent = user.email;
+        loadLatestData();
+        startAutoRefresh();
+      } else {
+        currentUser = null;
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('dashboardScreen').classList.add('hidden');
       }
-    }
+    });
 
-    function setupAuthObserver() {
-      auth.onAuthStateChanged(user => {
-        if (user) {
-          currentUser = user;
-          document.getElementById('loginScreen').classList.add('hidden');
-          document.getElementById('dashboardScreen').classList.remove('hidden');
-          document.getElementById('userEmail').textContent = user.email;
-          loadLatestData();
-          startAutoRefresh();
-        } else {
-          currentUser = null;
-          document.getElementById('loginScreen').classList.remove('hidden');
-          document.getElementById('dashboardScreen').classList.add('hidden');
+    // Login Form Handler - Setup after DOM loads
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const loginBtn = document.getElementById('loginBtn');
+        const errorDiv = document.getElementById('loginError');
+
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Signing in...';
+        errorDiv.classList.remove('show');
+
+        try {
+          await auth.signInWithEmailAndPassword(email, password);
+        } catch (error) {
+          console.error('Login error:', error);
+          errorDiv.textContent = getErrorMessage(error.code);
+          errorDiv.classList.add('show');
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Sign In';
         }
       });
-    }
 
-    // Login Form Handler
-    document.addEventListener('DOMContentLoaded', () => {
-      const loginForm = document.getElementById('loginForm');
-      if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const email = document.getElementById('email').value;
-          const password = document.getElementById('password').value;
-          const loginBtn = document.getElementById('loginBtn');
-          const errorDiv = document.getElementById('loginError');
-
-          loginBtn.disabled = true;
-          loginBtn.textContent = 'Signing in...';
-          errorDiv.classList.remove('show');
-
-          try {
-            await auth.signInWithEmailAndPassword(email, password);
-          } catch (error) {
-            console.error('Login error:', error);
-            errorDiv.textContent = getErrorMessage(error.code);
-            errorDiv.classList.add('show');
-            loginBtn.disabled = false;
-            loginBtn.textContent = 'Sign In';
-          }
-        });
-      }
+      // Setup time slider
+      const slider = document.getElementById('timeSlider');
+      const display = document.getElementById('sliderDisplay');
+      
+      slider.addEventListener('input', function() {
+        const index = parseInt(this.value);
+        display.textContent = timeLabels[index];
+      });
+      
+      slider.addEventListener('change', function() {
+        const index = parseInt(this.value);
+        changeTimeRange(timeRanges[index]);
+      });
     });
 
     function getErrorMessage(code) {
@@ -894,7 +846,8 @@
         'auth/invalid-email': 'Invalid email address.',
         'auth/user-disabled': 'This account has been disabled.',
         'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
-        'auth/network-request-failed': 'Network error. Check your connection.'
+        'auth/network-request-failed': 'Network error. Check your connection.',
+        'auth/invalid-credential': 'Invalid email or password.'
       };
       return messages[code] || 'Login failed. Please try again.';
     }
@@ -906,20 +859,287 @@
       }
     }
 
+    function getAQIInfo(aqi) {
+      const info = {
+        1: { status: "Excellent", color: "linear-gradient(135deg, #10b981 0%, #059669 100%)" },
+        2: { status: "Good", color: "linear-gradient(135deg, #0891b2 0%, #0284c7 100%)" },
+        3: { status: "Moderate", color: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" },
+        4: { status: "Poor", color: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)" },
+        5: { status: "Unhealthy", color: "linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%)" }
+      };
+      return info[aqi] || { status: "Unknown", color: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)" };
+    }
+
+    function getCO2Info(eco2) {
+      if (eco2 > 1000) return { status: "Poor", color: "#ef4444" };
+      if (eco2 > 800) return { status: "Moderate", color: "#f59e0b" };
+      return { status: "Normal", color: "#10b981" };
+    }
+
+    function getOccupancyStatus(count) {
+      if (count === 0) return "Empty";
+      if (count === 1) return "1 Person";
+      return count + " People";
+    }
+
     function showError(message) {
-      const errorEl = document.getElementById('errorMessage');
-      if (errorEl) {
-        errorEl.textContent = message;
-        errorEl.style.display = 'block';
-      }
-      const loadingEl = document.getElementById('loadingMessage');
-      if (loadingEl) {
-        loadingEl.style.display = 'none';
+      document.getElementById('errorMessage').textContent = message;
+      document.getElementById('errorMessage').style.display = 'block';
+      document.getElementById('loadingMessage').style.display = 'none';
+      document.getElementById('connectionStatus').textContent = '❌ Connection Error';
+    }
+
+    function updateDisplay(data) {
+      document.getElementById('loadingMessage').style.display = 'none';
+      document.getElementById('dataContainer').style.display = 'block';
+      document.getElementById('errorMessage').style.display = 'none';
+      document.getElementById('connectionStatus').textContent = '✅ Connected';
+
+      document.getElementById('tempValue').textContent = data.temperature.toFixed(1);
+      document.getElementById('humValue').textContent = data.humidity.toFixed(1);
+      document.getElementById('co2Value').textContent = data.eco2;
+      document.getElementById('tvocValue').textContent = data.tvoc;
+      document.getElementById('aqiValue').textContent = data.aqi;
+
+      const occupancy = data.OCount || 0;
+      document.getElementById('occupancyValue').textContent = occupancy;
+      document.getElementById('occupancyStatus').textContent = getOccupancyStatus(occupancy);
+
+      const aqiInfo = getAQIInfo(data.aqi);
+      document.getElementById('aqiStatus').textContent = aqiInfo.status;
+      document.getElementById('aqiCard').style.background = aqiInfo.color;
+
+      const co2Info = getCO2Info(data.eco2);
+      document.getElementById('co2Status').textContent = co2Info.status;
+      document.getElementById('co2Status').style.background = co2Info.color;
+
+      const lastUpdate = new Date(data.timestamp);
+      const now = new Date();
+      const diffMinutes = Math.floor((now - lastUpdate) / 60000);
+      document.getElementById('lastUpdate').textContent = 
+        `⏱️ Updated ${diffMinutes === 0 ? 'just now' : diffMinutes + ' min ago'}`;
+    }
+
+    async function loadLatestData() {
+      if (!currentUser) return;
+
+      try {
+        const snapshot = await database.ref('airQualityData').orderByKey().limitToLast(1).once('value');
+        const data = snapshot.val();
+        
+        if (!data || Object.keys(data).length === 0) {
+          showError('No data available yet. Device may not have sent data to Firebase.');
+          return;
+        }
+
+        const latestKey = Object.keys(data)[0];
+        const latestData = data[latestKey];
+
+        updateDisplay(latestData);
+        
+        if (!cachedData || Date.now() - cachedData.loadTime > 60000) {
+          loadHistoryData();
+        } else {
+          updateCharts();
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showError('Error loading data: ' + error.message);
       }
     }
 
-    // Add all other functions from your original code here
-    // (loadLatestData, updateDisplay, createChart, etc.)
+    async function loadHistoryData() {
+      if (!currentUser) return;
+
+      try {
+        const hoursAgo = currentTimeRange;
+        const startTime = Math.floor(Date.now() / 1000) - (hoursAgo * 60 * 60);
+        
+        const snapshot = await database.ref('airQualityData').orderByKey().startAt(startTime.toString()).once('value');
+        const data = snapshot.val();
+
+        if (!data) {
+          console.log('No historical data available');
+          return;
+        }
+
+        cachedData = { data: data, loadTime: Date.now() };
+        totalRecords = Object.keys(data).length;
+        document.getElementById('dataCount').textContent = `📊 ${totalRecords} records`;
+
+        updateCharts();
+      } catch (error) {
+        console.error('Error loading history:', error);
+      }
+    }
+
+    function createChart(ctx, label, data, color, yAxisLabel) {
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: label,
+            data: data.values,
+            borderColor: color,
+            backgroundColor: color + '30',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 7,
+            pointBackgroundColor: color,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              padding: 16,
+              titleFont: { size: 15, weight: '700' },
+              bodyFont: { size: 14, weight: '600' },
+              borderColor: 'rgba(148, 163, 184, 0.3)',
+              borderWidth: 1,
+              cornerRadius: 12
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: label === 'Occupancy',
+              title: { 
+                display: true, 
+                text: yAxisLabel,
+                font: { size: 13, weight: '600' },
+                color: '#64748b'
+              },
+              grid: { color: 'rgba(148, 163, 184, 0.15)', drawBorder: false },
+              ticks: label === 'Occupancy' ? { 
+                stepSize: 1,
+                font: { size: 12, weight: '600' },
+                color: '#64748b'
+              } : {
+                font: { size: 12, weight: '600' },
+                color: '#64748b'
+              }
+            },
+            x: { 
+              grid: { display: false, drawBorder: false },
+              ticks: {
+                font: { size: 11, weight: '600' },
+                color: '#94a3b8'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateCharts() {
+      if (!cachedData) return;
+
+      const data = cachedData.data;
+      const entries = Object.values(data).sort((a, b) => 
+        new Date(a.timestamp) - new Date(b.timestamp)
+      );
+
+      const maxPoints = 100;
+      let sampledEntries = entries;
+      
+      if (entries.length > maxPoints) {
+        const step = Math.ceil(entries.length / maxPoints);
+        sampledEntries = entries.filter((_, index) => index % step === 0);
+      }
+
+      const labels = sampledEntries.map(e => {
+        const date = new Date(e.timestamp);
+        if (currentTimeRange <= 24) {
+          return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        } else {
+          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit' });
+        }
+      });
+
+      const temps = sampledEntries.map(e => e.temperature);
+      const hums = sampledEntries.map(e => e.humidity);
+      const co2s = sampledEntries.map(e => e.eco2);
+      const tvocs = sampledEntries.map(e => e.tvoc);
+      const occupancies = sampledEntries.map(e => e.OCount || 0);
+
+      const avgTemp = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
+      const avgHum = (hums.reduce((a, b) => a + b, 0) / hums.length).toFixed(1);
+      const avgCo2 = Math.round(co2s.reduce((a, b) => a + b, 0) / co2s.length);
+      const maxCo2 = Math.max(...co2s);
+      const avgTvoc = Math.round(tvocs.reduce((a, b) => a + b, 0) / tvocs.length);
+      const maxTvoc = Math.max(...tvocs);
+      const avgOccupancy = (occupancies.reduce((a, b) => a + b, 0) / occupancies.length).toFixed(1);
+      const maxOccupancy = Math.max(...occupancies);
+
+      document.getElementById('avgTemp').textContent = avgTemp + '°C';
+      document.getElementById('avgHum').textContent = avgHum + '%';
+      document.getElementById('avgCo2').textContent = avgCo2 + ' ppm';
+      document.getElementById('maxCo2').textContent = maxCo2 + ' ppm';
+      document.getElementById('avgTvoc').textContent = avgTvoc + ' ppb';
+      document.getElementById('maxTvoc').textContent = maxTvoc + ' ppb';
+      document.getElementById('avgOccupancy').textContent = avgOccupancy;
+      document.getElementById('maxOccupancy').textContent = maxOccupancy;
+
+      Object.values(charts).forEach(chart => { if (chart) chart.destroy(); });
+
+      charts.occupancy = createChart(
+        document.getElementById('occupancyChart').getContext('2d'),
+        'Occupancy', { labels, values: occupancies }, '#0891b2', 'Number of People'
+      );
+
+      charts.temp = createChart(
+        document.getElementById('tempChart').getContext('2d'),
+        'Temperature', { labels, values: temps }, '#ef4444', 'Temperature (°C)'
+      );
+
+      charts.hum = createChart(
+        document.getElementById('humChart').getContext('2d'),
+        'Humidity', { labels, values: hums }, '#0891b2', 'Humidity (%)'
+      );
+
+      charts.co2 = createChart(
+        document.getElementById('co2Chart').getContext('2d'),
+        'CO2', { labels, values: co2s }, '#10b981', 'CO2 (ppm)'
+      );
+
+      charts.tvoc = createChart(
+        document.getElementById('tvocChart').getContext('2d'),
+        'TVOCs', { labels, values: tvocs }, '#8b5cf6', 'TVOCs (ppb)'
+      );
+    }
+
+    function changeTimeRange(hours) {
+      currentTimeRange = hours;
+      const index = timeRanges.indexOf(hours);
+      if (index !== -1) {
+        document.getElementById('timeSlider').value = index;
+        document.getElementById('sliderDisplay').textContent = timeLabels[index];
+      }
+      cachedData = null;
+      loadHistoryData();
+    }
+
+    function toggleAutoRefresh() {
+      autoRefresh = !autoRefresh;
+      const btn = document.getElementById('autoRefreshBtn');
+      
+      if (autoRefresh) {
+        btn.textContent = '⏸️ Pause Auto-refresh';
+        startAutoRefresh();
+      } else {
+        btn.textContent = '▶️ Resume Auto-refresh';
+        clearInterval(refreshInterval);
+      }
+    }
 
     function startAutoRefresh() {
       if (refreshInterval) clearInterval(refreshInterval);
@@ -927,9 +1147,6 @@
         if (autoRefresh && currentUser) loadLatestData();
       }, 30000);
     }
-
-    // Initialize the app when page loads
-    window.addEventListener('load', initializeApp);
   </script>
 </body>
 </html>
